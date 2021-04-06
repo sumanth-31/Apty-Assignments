@@ -1,4 +1,4 @@
-logClassAndId = (element) => {
-	console.log("Classes = ", element.classList);
-	console.log("Id = ", element.id);
+logClassAndId = (event) => {
+	console.log("Classes = ", event.target.classList);
+	console.log("Id = ", event.target.id);
 };

@@ -5,30 +5,17 @@
 	</head>
 	<body>
 		<h2>Log Classes and Id</h2>
-		<h5 onclick="logClassAndId(this)" class="header-class" id="headerElement">
-			I am a h5 element
-		</h5>
-		<p onclick="logClassAndId(this)" class="para-class" id="paraElement">
-			I am a paragraph
-		</p>
-		<button
-			onclick="logClassAndId(this)"
-			class="button-class"
-			id="buttonElement"
-		>
-			Button
-		</button>
-		<input
-			placeholder="Text Input"
-			onclick="logClassAndId(this)"
-			class="input-class"
-			id="inputElement"
-		/>
+		<h5 class="header-class" id="headerElement">I am a h5 element</h5>
+		<p class="para-class" id="paraElement">I am a paragraph</p>
+		<button class="button-class" id="buttonElement">Button</button>
+		<input placeholder="Text Input" class="input-class" id="inputElement" />
 		<textarea
-			onclick="logClassAndId(this)"
 			class="textarea-class"
 			id="textareaElement"
 			placeholder="Text Area Input"
 		></textarea>
+		<script>
+			document.body.addEventListener("click", logClassAndId);
+		</script>
 	</body>
 </html>
