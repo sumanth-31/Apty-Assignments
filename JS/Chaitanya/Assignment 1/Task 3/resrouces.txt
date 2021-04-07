@@ -4,3 +4,4 @@ https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord
 https://developer.mozilla.org/en-US/docs/Web/API/NodeList
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
 https://developer.mozilla.org/en-US/docs/Web/API/MutationEvent
+https://www.w3schools.com/js/js_versions.asp
