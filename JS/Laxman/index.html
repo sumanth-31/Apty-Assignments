@@ -6,14 +6,21 @@
 	</head>
 	<body>
 		<div>
-			<h4>I'm Main Page</h4>
-			<button onclick="executeWorkflow(this)">Start Workflow</button>
-			<input placeholder="Message for iframe" id="main-input" />
-			<button onclick="sendToIFrame()" id="main-send">Send</button>
-			<div id="main-inbox">
-				<h4>Inbox of main window:</h4>
+			<div id="main-div">
+				<h4>I'm Main Page</h4>
+				<button onclick="startWorkflow()">Start Workflow</button>
+				<input placeholder="Message for iframe" id="main-input" />
+				<button onclick="sendToIFrame()" id="main-send">Send</button>
+				<div id="main-inbox">
+					<h4>Inbox of main window:</h4>
+				</div>
 			</div>
 		</div>
-		<iframe src="./iframe.html" id="iframe1"></iframe>
+		<div>
+			<iframe src="./iframe.html" id="iframe1" height="400px"></iframe>
+			<iframe src="./iframe.html" id="iframe2" height="400px"></iframe>
+			<iframe src="./iframe.html" id="iframe3" height="400px"></iframe>
+			<iframe src="./iframe.html" id="iframe4" height="400px"></iframe>
+		</div>
 	</body>
 </html>
