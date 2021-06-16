@@ -35,7 +35,7 @@
 	pointer-events: none;
 	border-width: 5px;
 	right: 100%;
-	border-right-color: #a5bcff;
+	border-right-color: white;
 }
 body {
 	background-color: hsl(222, 30%, 17%);

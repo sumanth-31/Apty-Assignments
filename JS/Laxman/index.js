@@ -90,52 +90,34 @@ function executeNextStep() {
 		alert("Workflow exectuted successfully!");
 		return;
 	}
-	const step = workflow.steps[currStep];
-	const focusElement = getFocusedElement();
-	//Add Scroll listeners to parents, so that baloon moves when any parent scrolls
-	addListenersToScrollableParents();
-	//Set baloon position and display
-	displayCurrentStep();
-	//Listen for step-execution
-	focusElement.addEventListener(step.type, finishStep);
+
+	const message = { type: "add-step", step: workflow.steps[currStep] };
+	sendMessage(message);
 }
 
 //Handle step-finish
-function finishStep() {
-	const step = workflow.steps[currStep];
-	const focusElement = getFocusedElement();
+function goToNextStep() {
 	hideBaloon();
-	removeListenersOfScrollableParents();
-	focusElement.removeEventListener(step.type, finishStep); //Remove event listener as step finished
 	currStep++;
 	executeNextStep(); //Execute next steps
 }
 
-function sendToIFrame() {
-	const text = document.getElementById("main-input").value;
+function sendMessage(message) {
 	const iframes = document.getElementsByTagName("iframe");
+	window.postMessage(message, "*");
 	for (const iframe of iframes) {
 		const iframeWindow = iframe.contentWindow;
-		iframeWindow.postMessage(text, "*");
+		iframeWindow.postMessage(message, "*");
 	}
 }
 
-function getFocusedElement() {
-	let doc = document;
-	const step = workflow.steps[currStep];
-	for (const iframe of step.iframes) {
-		//Iterate to get the nested iframe in which element is present
-		doc = doc.querySelector(iframe).contentDocument;
-	}
-	//Get selected element
-	return doc.querySelector(step.selector);
+function adjustBaloon() {
+	if (currStep == -1) return;
+	const message = { type: "rect-request", step: workflow.steps[currStep] };
+	sendMessage(message);
 }
 
 function setBaloonPosition(baseElementRect) {
-	if (baseElementRect.top == 0) {
-		hideBaloon();
-		return;
-	}
 	showBaloon();
 	//Align baloon center with element center
 	baloon.style.top =
@@ -157,37 +139,16 @@ function setBaloonContent(step) {
 	`;
 }
 
-window.addEventListener("message", function (event) {
-	const newMessage = document.createElement("h5");
-	newMessage.innerText = event.data;
-	const inbox = this.document.getElementById("main-inbox");
-	inbox.appendChild(newMessage);
-});
+function finishStep() {
+	const message = { type: "finish-step", step: workflow.steps[currStep] };
+	sendMessage(message);
+}
 
-function displayCurrentStep() {
+//Set content and position of baloon
+function configureBaloon() {
 	const step = workflow.steps[currStep];
-	const focusElement = getFocusedElement();
 	setBaloonContent(step);
-	setBaloonPosition(focusElement.getBoundingClientRect());
-	if (step.iframes.length > 0) {
-		let top = 0;
-		let left = 0;
-		let doc = document;
-		for (const frameSelector of step.iframes) {
-			const frame = doc.querySelector(frameSelector);
-			top += frame.getBoundingClientRect().top;
-			left += frame.getBoundingClientRect().left;
-			doc = frame.contentDocument;
-		}
-		let rect = focusElement.getBoundingClientRect();
-		rect = {
-			height: rect.height,
-			width: rect.width,
-			top: rect.top + top,
-			left: rect.left + left,
-		};
-		setBaloonPosition(rect);
-	}
+	adjustBaloon();
 }
 
 function addDOMListener() {
@@ -200,7 +161,7 @@ function addDOMListener() {
 			}
 		});
 		if (valid) {
-			displayCurrentStep();
+			configureBaloon();
 		}
 	});
 	observer.observe(document.body, {
@@ -210,45 +171,120 @@ function addDOMListener() {
 	});
 }
 
-let scrollableParents = [];
-
-function addListenersToScrollableParents() {
-	let currElement = getFocusedElement().parentElement;
-	const iframes = workflow.steps[currStep].iframes;
-	const docs = [document];
-	let index = workflow.steps[currStep].iframes.length;
-	let doc = document;
-	for (const frame of iframes) {
-		doc = doc.querySelector(frame).contentDocument;
-		docs.push(doc);
-		scrollableParents.push(doc);
-		doc.addEventListener("scroll", scrollHandler); //Add scroll handlers to all documents
-	}
-	while (index >= 1 || currElement) {
-		// Iterate all parent elements till end of iframe is reached, then move to parent frame
-		if (!currElement) {
-			//All parent elements visited, use parent frame
-			doc = docs[--index];
-			currElement = doc.querySelector(iframes[index]).parentElement;
-		} else {
-			scrollableParents.push(currElement); // To remove later
-			currElement.addEventListener("scroll", scrollHandler);
-			currElement = currElement.parentElement;
-		}
-	}
+//Remove listener after step finished
+function removeStepListener() {
+	const message = {
+		type: "remove-step-listener",
+		step: workflow.steps[currStep],
+	};
+	sendMessage(message);
 }
 
-function removeListenersOfScrollableParents() {
+let scrollableParents = [];
+
+function addScrollToParents() {
+	const step = workflow.steps[currStep];
+	let currDocEle;
+	if (step.iframes.length == 0) {
+		//This doc contains element
+		currDocEle = document.querySelector(step.selector);
+	} else {
+		//This doc doesn't contain element,but contains the frame that does
+		currDocEle = document.querySelector(step.iframes[0]);
+	}
+	//Add Scroll to all parents, so that when any parent is scrolled, baloon is adjusted
+	currDocEle = currDocEle.parentElement;
+	document.addEventListener("scroll", adjustBaloon);
+	while (currDocEle) {
+		currDocEle.addEventListener("scroll", adjustBaloon);
+		scrollableParents.push(currDocEle);
+		currDocEle = currDocEle.parentElement;
+	}
+	document.removeEventListener("scroll", adjustBaloon);
+}
+
+//Remove scroll listener on parents after step finished
+function removeScrollOfParents() {
 	for (const parent of scrollableParents) {
-		parent.removeEventListener("scroll", scrollHandler);
+		parent.removeEventListener("scroll", adjustBaloon);
 	}
 	scrollableParents = [];
 }
 
-function scrollHandler() {
-	if (currStep == -1) return;
-	displayCurrentStep();
+function chat() {
+	const text = document.getElementById("main-input").value;
+	const message = { type: "chat", text };
+	sendMessage(message);
 }
+
+window.addEventListener("message", function (event) {
+	let message = event.data;
+	let rect, frameSelector, step, focusElement;
+	switch (message.type) {
+		case "chat":
+			const newMessage = document.createElement("h5");
+			newMessage.innerText = message.text;
+			const inbox = this.document.getElementById("main-inbox");
+			inbox.appendChild(newMessage);
+			break;
+		case "rect-response":
+			rect = message.rect;
+			if (rect.height === 0 || currStep === -1) {
+				//Element invisible or workflow didn't start
+				hideBaloon();
+				break;
+			}
+			frameSelector = message.frameSelector;
+			if (frameSelector) {
+				//Element is inside frame, add frame's top,left
+				const frame = document.querySelector(frameSelector);
+				const frameRect = frame.getBoundingClientRect();
+				const newRect = {
+					height: rect.height,
+					width: rect.width,
+					top: rect.top + frameRect.top,
+					left: rect.left + frameRect.left,
+				};
+				setBaloonPosition(newRect);
+			} else {
+				setBaloonPosition(rect);
+			}
+			break;
+		case "rect-request":
+			step = event.data.step;
+			if (step.iframes.length > 0) break; //Element not in this doc
+			focusElement = document.querySelector(step.selector);
+			message = {
+				type: "rect-response",
+				rect: focusElement.getBoundingClientRect(),
+			};
+			sendMessage(message, "*");
+			break;
+		case "add-step":
+			step = event.data.step;
+			if (step.iframes.length == 0) {
+				focusElement = this.document.querySelector(step.selector);
+				focusElement.addEventListener(step.type, finishStep);
+			}
+			addScrollToParents();
+			configureBaloon();
+			break;
+		case "remove-step-listener":
+			step = event.data.step;
+			if (step.iframes.length > 0) break;
+			focusElement = this.document.querySelector(step.selector);
+			focusElement.removeEventListener(step.type, finishStep);
+			break;
+		case "finish-step":
+			removeScrollOfParents();
+			removeStepListener();
+			goToNextStep();
+			break;
+		case "adjust-baloon":
+			adjustBaloon();
+			break;
+	}
+});
 
 window.onload = function () {
 	baloon.classList.add("step-dialog");
