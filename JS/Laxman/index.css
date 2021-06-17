@@ -1,6 +1,6 @@
 .step-dialog {
 	z-index: 6;
-	position: absolute;
+	position: fixed;
 	top: 100px;
 	left: 300px;
 	will-change: transform;

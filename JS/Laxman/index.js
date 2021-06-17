@@ -121,8 +121,11 @@ function setBaloonPosition(baseElementRect) {
 	showBaloon();
 	//Align baloon center with element center
 	baloon.style.top =
-		baseElementRect.top + baseElementRect.height / 2 - baloon.offsetHeight / 2;
-	baloon.style.left = baseElementRect.left + baseElementRect.width + 10;
+		baseElementRect.top +
+		baseElementRect.height / 2 -
+		baloon.offsetHeight / 2 +
+		"px";
+	baloon.style.left = baseElementRect.left + baseElementRect.width + 10 + "px";
 }
 
 function hideBaloon() {
@@ -194,13 +197,11 @@ function addScrollToParents() {
 	}
 	//Add Scroll to all parents, so that when any parent is scrolled, baloon is adjusted
 	currDocEle = currDocEle.parentElement;
-	document.addEventListener("scroll", adjustBaloon);
 	while (currDocEle) {
 		currDocEle.addEventListener("scroll", adjustBaloon);
 		scrollableParents.push(currDocEle);
 		currDocEle = currDocEle.parentElement;
 	}
-	document.removeEventListener("scroll", adjustBaloon);
 }
 
 //Remove scroll listener on parents after step finished
@@ -287,6 +288,7 @@ window.addEventListener("message", function (event) {
 });
 
 window.onload = function () {
+	document.addEventListener("scroll", adjustBaloon);
 	baloon.classList.add("step-dialog");
 	baloon.id = "apty-baloon";
 	document.body.appendChild(baloon);
