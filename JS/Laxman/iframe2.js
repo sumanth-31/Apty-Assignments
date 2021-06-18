@@ -14,10 +14,12 @@ window.addEventListener("message", function (event) {
 			if (step.iframes.length == 0 || step.iframes[0] !== frameSelector) break;
 			focusElement = this.document.querySelector(step.selector);
 			rect = focusElement.getBoundingClientRect();
+			const visible = rect.top > 0 && rect.bottom < window.innerHeight;
 			message = {
 				type: "rect-response",
 				rect,
 				frameSelector: frameSelector,
+				visible,
 			};
 			this.window.top.postMessage(message, "*");
 			break;
@@ -27,13 +29,6 @@ window.addEventListener("message", function (event) {
 			focusElement = this.document.querySelector(step.selector);
 			focusElement.addEventListener(step.type, finishStep);
 			addScrollToParents(step);
-			break;
-		case "remove-step-listener":
-			step = message.step;
-			if (step.iframes.length == 0 || step.iframes[0] !== frameSelector) break;
-			removeScrollOfParents();
-			focusElement = this.document.querySelector(step.selector);
-			focusElement.removeEventListener(step.type, finishStep);
 			break;
 	}
 });
@@ -65,7 +60,9 @@ function removeScrollOfParents() {
 	scrollableParents = [];
 }
 
-function finishStep() {
+function finishStep(event) {
+	removeScrollOfParents();
+	event.target.removeEventListener(event.type, finishStep);
 	const message = { type: "finish-step" };
 	sendMessage(message);
 }

@@ -174,15 +174,6 @@ function addDOMListener() {
 	});
 }
 
-//Remove listener after step finished
-function removeStepListener() {
-	const message = {
-		type: "remove-step-listener",
-		step: workflow.steps[currStep],
-	};
-	sendMessage(message);
-}
-
 let scrollableParents = [];
 
 function addScrollToParents() {
@@ -229,6 +220,10 @@ window.addEventListener("message", function (event) {
 			inbox.appendChild(newMessage);
 			break;
 		case "rect-response":
+			if (!message.visible) {
+				hideBaloon();
+				break;
+			}
 			rect = message.rect;
 			if (rect.height === 0 || currStep === -1) {
 				//Element invisible or workflow didn't start
@@ -255,9 +250,12 @@ window.addEventListener("message", function (event) {
 			step = event.data.step;
 			if (step.iframes.length > 0) break; //Element not in this doc
 			focusElement = document.querySelector(step.selector);
+			rect = focusElement.getBoundingClientRect();
+			const visible = rect.top > 0 && rect.bottom < window.innerHeight;
 			message = {
 				type: "rect-response",
-				rect: focusElement.getBoundingClientRect(),
+				rect,
+				visible,
 			};
 			sendMessage(message, "*");
 			break;
@@ -270,15 +268,13 @@ window.addEventListener("message", function (event) {
 			addScrollToParents();
 			configureBaloon();
 			break;
-		case "remove-step-listener":
-			step = event.data.step;
-			if (step.iframes.length > 0) break;
-			focusElement = this.document.querySelector(step.selector);
-			focusElement.removeEventListener(step.type, finishStep);
-			break;
 		case "finish-step":
+			step = workflow.steps[currStep];
+			if (step.iframes.length == 0) {
+				focusElement = this.document.querySelector(step.selector);
+				focusElement.removeEventListener(step.type, finishStep);
+			}
 			removeScrollOfParents();
-			removeStepListener();
 			goToNextStep();
 			break;
 		case "adjust-baloon":
