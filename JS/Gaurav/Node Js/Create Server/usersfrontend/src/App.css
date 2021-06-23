@@ -1,0 +1,43 @@
+html {
+	background-color: #1f2739;
+}
+.App {
+	text-align: center;
+	font-family: sans-serif;
+	color: white;
+}
+input {
+	display: block;
+	margin: 2rem auto;
+}
+.user-card {
+	box-shadow: black 2px 5px 5px;
+	border-radius: 0.4rem;
+	margin: 1rem auto;
+	border: 1px solid black;
+	width: 50%;
+	background-color: white;
+	color: black;
+}
+input {
+	border-radius: 0.5rem;
+	border: 1px solid black;
+	padding: 0.3rem 0.5rem;
+	color: black;
+	margin-top: 2rem;
+}
+button {
+	border: 0px;
+	border-radius: 0.4rem;
+	padding: 0.4rem 1rem;
+	background-color: #007bff;
+	box-shadow: black 2px 2px 5px;
+	cursor: pointer;
+	color: white;
+}
+.App > div:not(:first-child) {
+	margin: 1rem auto;
+}
+.App > div:first-child {
+	padding: 1rem;
+}
